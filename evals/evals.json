@@ -1,0 +1,186 @@
+{
+  "skill": "cadenceux-github",
+  "version": "1.0.0",
+  "notes": "Grade each answer against must / must_not. A case passes only if every must is present and no must_not appears.",
+  "cases": [
+    {
+      "id": "first-publish",
+      "mode": "any",
+      "prompt": "I've built a Claude skill for my FileMaker work. It's a folder with SKILL.md and some reference files, built from a client solution I support. I've never used GitHub. How do I put it on GitHub so other FileMaker developers can use it?",
+      "must": [
+        "Reviews the content for client material before publishing: client or company names, hostnames/server addresses, account names or passwords in script examples, real records or sample data",
+        "Puts SKILL.md at the repository root (repo root = skill folder)",
+        "Adds a licence and a README that tells people how to install it",
+        "Authenticates through the browser (gh auth login or Git Credential Manager), not by typing a GitHub password",
+        "Creates a release with a downloadable .zip of the skill folder for Claude.ai / Claude app upload"
+      ],
+      "must_not": [
+        "Tells the developer to type their GitHub account password at a terminal prompt",
+        "Ticks 'Add a README' on github.com/new and then pushes an existing folder without addressing the resulting conflict"
+      ]
+    },
+    {
+      "id": "claude-code-install",
+      "mode": "any",
+      "prompt": "My FileMaker skill is in a public GitHub repo. What do I need to add so Claude Code users can install it with a command, and what command do they run?",
+      "must": [
+        "Adds .claude-plugin/plugin.json to the repo",
+        "Adds .claude-plugin/marketplace.json so the repo is its own marketplace (or lists it in an existing marketplace)",
+        "Install is two commands: claude plugin marketplace add <owner>/<repo> then claude plugin install <name>@<marketplace-name>",
+        "The name after @ is the marketplace's name from marketplace.json, not the repo name"
+      ],
+      "must_not": [
+        "Invents a command such as 'claude skill install' or 'claude skills add <url>'",
+        "Says users must clone into ~/.claude/skills as the only option"
+      ]
+    },
+    {
+      "id": "upload-zip-rejected",
+      "mode": "any",
+      "prompt": "Someone tried my FileMaker skill: they clicked Code > Download ZIP on my GitHub repo and uploaded it to Claude in Customize > Skills, and it didn't work. What's wrong?",
+      "must": [
+        "GitHub's source zip wraps everything in a <repo>-main folder and carries every repo file, including .claude-plugin/ and evals",
+        "An archive carrying a plugin manifest (.claude-plugin/) is rejected by, or routed away from, the Claude app's skill upload",
+        "Fix: attach a purpose-built zip (skill folder with SKILL.md inside, no .claude-plugin, no .git) to a GitHub release and link to that asset from the README",
+        "Optionally a .gitattributes export-ignore so GitHub's source zips leave out .claude-plugin/ and evals/"
+      ],
+      "must_not": [
+        "Says the user just needs to rename the zip or re-upload the same file"
+      ]
+    },
+    {
+      "id": "release-update",
+      "mode": "any",
+      "prompt": "I've fixed some things in my FileMaker skill that's already on GitHub. How do I ship it as version 1.1.0 properly?",
+      "must": [
+        "Bumps the version in every place it lives, kept identical: SKILL.md metadata.version, VERSION file (if used), plugin.json, CHANGELOG heading",
+        "Commits, tags v1.1.0 and pushes the tag",
+        "Creates a GitHub release (gh release create or the website) with notes from the CHANGELOG",
+        "Builds the upload zip from a clean checkout of the tag, not the working folder, and attaches it",
+        "Explains plugin users get it via claude plugin marketplace update / plugin update, and zip users must re-download"
+      ],
+      "must_not": [
+        "Re-uses or moves an already-published tag"
+      ]
+    },
+    {
+      "id": "secret-in-history",
+      "mode": "any",
+      "prompt": "Before making my FileMaker skill repo public I noticed an early commit had a script example with our FileMaker Server admin password in it. I removed it in a later commit. Is it safe to make the repo public now?",
+      "must": [
+        "No: the password is still in the earlier commit in history",
+        "Change (rotate) the password first, regardless of anything else",
+        "Either rewrite history (git filter-repo or BFG) and force-push, or start a fresh repository from the cleaned files",
+        "Re-check history (e.g. git log -p / grep the history) before switching visibility"
+      ],
+      "must_not": [
+        "Says deleting it in a later commit is enough",
+        "Treats rewriting history as making the old password safe without rotating it"
+      ]
+    },
+    {
+      "id": "what-to-exclude",
+      "mode": "any",
+      "prompt": "My skill folder for FileMaker has SKILL.md, references, a copy of the client's .fmp12 I used for testing, a SaXML export, and a .env with my Claude API key. What should go on GitHub?",
+      "must": [
+        "The .fmp12 stays out (client data, and binary)",
+        "The SaXML export stays out unless scrubbed: it carries client schema, account names and can carry data",
+        "The .env stays out; add a .gitignore before the first commit; if the key was ever committed, revoke it",
+        "Run git status (or a dry run) and check the staged file list before the first commit"
+      ],
+      "must_not": [
+        "Suggests committing the .env and making the repo private as sufficient protection"
+      ]
+    },
+    {
+      "id": "bare-invocation-code",
+      "mode": "claude-code",
+      "prompt": "/cadenceux-github  (Claude Code session in ~/skills/invoice-helper. If you looked, you would find: SKILL.md present with name: invoice-helper; `git status` says 'not a git repository'; `gh auth status` says logged in to github.com as jdoe.)",
+      "must": [
+        "Reports the state found: a skill folder named invoice-helper, no Git repo yet, gh signed in",
+        "Routes to first publish and treats tools and sign-in as done",
+        "Names scrubbing client material as the next step",
+        "Asks before starting; doesn't create a repo or push"
+      ],
+      "must_not": [
+        "Starts with the full step 1 install instructions as if nothing were set up",
+        "Creates a GitHub repo, commits or pushes without asking"
+      ]
+    },
+    {
+      "id": "bare-invocation-chat",
+      "mode": "chat",
+      "prompt": "/cadenceux-github",
+      "must": [
+        "Asks one question: first publish, shipping an update, or fixing a problem"
+      ],
+      "must_not": [
+        "Lays out all eight first-publish steps in full before knowing what the developer wants"
+      ]
+    },
+    {
+      "id": "new-account",
+      "mode": "chat",
+      "prompt": "I'd like to share my FileMaker skill but I've never had a GitHub account. Where do I start?",
+      "must": [
+        "The developer signs up themselves at github.com (free plan is enough)",
+        "Username choice matters: it appears in repo URLs and the install command",
+        "Turn on two-factor authentication and keep the recovery codes safe",
+        "Keep the email private and use the noreply address for commits",
+        "Then sign in with gh auth login through the browser"
+      ],
+      "must_not": [
+        "Asks the developer for their password or offers to create the account for them",
+        "Tells them to type a GitHub password at a terminal prompt"
+      ]
+    },
+    {
+      "id": "review-skills",
+      "mode": "claude-code",
+      "prompt": "Are my published skills up to date? (Simulated: review_published_skill.sh ran on ~/skills/invoice-helper and ~/skills/naming-conventions. invoice-helper: versions all 1.2.0, last tag v1.2.0, 3 commits since, GitHub release v1.2.0, open issues 1, installed in Claude Code 1.2.0; ACTION lines: '3 commit(s) since v1.2.0 not released: ship an update', '1 open issue(s) to read'. naming-conventions: versions all 1.1.0, last tag v1.1.0, 0 commits since, GitHub release v1.1.0, installed in Claude Code 1.0.0; ACTION: 'installed copy is 1.0.0, release is 1.1.0: claude plugin marketplace update, then claude plugin update'.)",
+      "must": [
+        "invoice-helper has unreleased changes: route to shipping an update (a new version, not re-using v1.2.0)",
+        "Read the open issue before releasing, since a fix could join the same update",
+        "naming-conventions: the installed copy is behind; update with claude plugin marketplace update then claude plugin update",
+        "Says content freshness (vendor changes, evals) is an audit for cadenceux-skill-creator",
+        "Asks before tagging, pushing or releasing"
+      ],
+      "must_not": [
+        "Tags, pushes or releases without asking",
+        "Says everything is up to date"
+      ]
+    }
+  ],
+  "near_misses": [
+    {
+      "id": "git-for-fmp12",
+      "prompt": "How do I version control my FileMaker solution with Git? I want to track schema changes over time.",
+      "expect": "not triggered"
+    },
+    {
+      "id": "build-a-skill",
+      "prompt": "Make me a skill that documents our FileMaker naming conventions.",
+      "expect": "not triggered (cadenceux-skill-creator)"
+    },
+    {
+      "id": "cadenceux-release",
+      "prompt": "Release claris-filemaker-pro v2.3.0 to the cadenceux marketplace.",
+      "expect": "not triggered (cadenceux-skill-creator)"
+    },
+    {
+      "id": "webviewer-app-push",
+      "prompt": "Push my ADT web viewer app to a new GitHub repo.",
+      "expect": "not triggered"
+    },
+    {
+      "id": "hook-plugin",
+      "prompt": "Build a Claude Code plugin with a hook that blocks writes to production FileMaker files.",
+      "expect": "not triggered (cadenceux-plugin-creator)"
+    },
+    {
+      "id": "mbs-question",
+      "prompt": "Which MBS function reads a file's contents into a container?",
+      "expect": "not triggered (monkeybread-mbs-plugin)"
+    }
+  ]
+}

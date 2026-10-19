@@ -1,0 +1,12 @@
+{
+  "name": "cadenceux-github",
+  "displayName": "CadenceUX GitHub",
+  "version": "1.0.0",
+  "description": "Walks a FileMaker developer through publishing a Claude skill on GitHub: sign-in, scrubbing client material, the plugin and marketplace files, release .zip and .skill archives built from a tag, install instructions and updates.",
+  "author": { "name": "Darrin Southern", "url": "https://cadenceux.com.au" },
+  "homepage": "https://github.com/CadenceUX/cadenceux-github-skill",
+  "repository": "https://github.com/CadenceUX/cadenceux-github-skill",
+  "license": "CC-BY-4.0",
+  "keywords": ["filemaker", "claris", "github", "claude-skill", "publishing"],
+  "skills": ["./"]
+}
