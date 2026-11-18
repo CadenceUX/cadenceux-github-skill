@@ -1,0 +1,5 @@
+# Reviewed values the validator and scan_for_client_material.sh may skip.
+# Documentation placeholders in this skill's own instructions, not real accounts or hosts.
+12345678+username@users.noreply.github.com
+acme.local
+fmnet:

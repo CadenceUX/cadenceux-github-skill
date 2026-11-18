@@ -1,0 +1,63 @@
+# Known attacks on GitHub accounts, repos and tooling: indicators read by
+# scripts/check_known_attacks.sh and scripts/scan_skill.sh.
+#
+# Last reviewed: 2026-11-18. Indicators go stale within weeks; re-check the sources below
+# on every release of this skill and add new campaigns as rows.
+#
+# Columns (tab-separated): kind  pattern  confidence  campaign  note
+#   kind        commit   commit subject, extended regex, case-sensitive
+#               branch   branch name, extended regex
+#               path     file path in a repo or skill, extended regex
+#               content  text inside workflows, scripts, package.json or skill files, extended regex
+#               action   a GitHub Action reference in a workflow's uses:, extended regex
+#               git_fixed  lowest patched Git version in each release line (pattern = version)
+# Patterns that are literal strings are written with one character in brackets (b42...24[9])
+# so this file, and the scripts, never match their own indicators when a skill is scanned.
+#   confidence  high (only seen in the attack), medium (attack-specific but seen elsewhere),
+#               low (generic: read the commit before concluding anything)
+#
+# Sources:
+#   wfx: o3.security/blog/wfx-github-actions-secret-stealer-compromised-accounts (2026-11-12);
+#        endorlabs.com/learn/github-actions-supply-chain-attack-targeting-ci-secrets-at-scale;
+#        safedep.io/blog/github-actions-wfx-credential-stealer; akeyless.io/blog/wfx-github-accounts-ci-cd-secrets-attack
+#   Gheist: labs.cloudsecurityalliance.org/research/csa-research-note-gheist-github-token-actions-secret-theft-2/ (Wiz research)
+#   GhostAction: o3.security and akeyless.io pages above (C2 address only)
+#   Git: github.blog/open-source/git/git-security-vulnerabilities-announced-7/ (2026-11-10)
+#   Actions: CVE-2025-30066 (tj-actions/changed-files), CVE-2025-30154 (reviewdog), Trivy action tag hijack (March 2026)
+commit	^ci: refresh build cache$	medium	wfx	Payload injected into an existing workflow. Ordinary projects use this message too: read the diff for a ~1,500-line block, a dump of the secrets context, or a hidden .ci- script.
+commit	^chore: add ci helper$	medium	wfx	npm postinstall variant: adds .ci-xxxxxx.sh and a postinstall hook in package.json.
+commit	^chore: add dependency audit workflow$	high	wfx	New build-audit-xxxxxx.yml workflow, usually on a throwaway branch.
+commit	^docs: dependency audit notes$	high	wfx	Title of the probe pull request (branch wfx-docs, file docs/wfx-audit.md).
+commit	^ci: (restore|cleanup)$	low	wfx	The attacker's revert, seconds to a minute after the payload commit. Only meaningful next to one of the commits above.
+commit	^ci: sync config$	medium	Gheist	Adds .github/workflows/sync-check.yml on a ci-sync-xxxxxx branch.
+branch	^wfx-docs$	high	wfx	Probe pull request branch.
+branch	^ci-sync-[0-9a-z]{6}$	high	Gheist	Planted branch whose push triggers sync-check.yml.
+branch	^chore/[a-z0-9]{8}$	low	wfx	Reported throwaway payload branch; not seen in all samples and common in normal use.
+branch	^ci-check-[0-9]{4}$	low	wfx	Reported; at least one instance predates the campaign.
+path	(^|/)\.ci-[a-z0-9]{6}\.sh$	high	wfx	Hidden payload script (about 1,450 lines) in the repo root.
+path	(^|/)\.github/workflows/build-audit-[a-z0-9]{6}\.ya?ml$	high	wfx	Throwaway payload workflow.
+path	(^|/)docs/wfx-audit\.md$	high	wfx	Probe pull request file.
+path	(^|/)\.github/workflows/sync-check\.ya?ml$	medium	Gheist	Gheist workflow (name sync-check, permissions: {}).
+path	(^|/)\.gdmp_(pat|patg|sweep)$	high	Gheist	Files left on self-hosted runners.
+content	"(post|pre)install"[[:space:]]*:[[:space:]]*"[^"]*\.ci-[a-z0-9]{6}\.sh	high	wfx	npm install hook that runs the payload.
+content	toJSON\(secrets\)	medium	wfx, Gheist	Dumps every secret the workflow can read. Rare in legitimate workflows: check why it's there.
+content	WF_(CTOKEN|CALLBACK2?|EXFIL_[A-Z]+|TG_BOTS|TG_CHAT|MEMSCAN)	high	wfx	Payload configuration variables.
+content	b42d70a7aab9140ca19e824[9]|e6ny5telf3pht81qk5z[v]|15f44heehnax8jdf41y[x]	high	wfx	Campaign tokens set in the payload configuration.
+content	194\.150\.166\.244|18\.143\.168\.96|153\.75\.82\.159	high	wfx	Exfiltration servers (port 8080, /exfil).
+content	-100434016318[7]	high	wfx	Telegram chat that receives stolen data.
+content	<!--WFX-BEGI[N]-->|wfx-loo[t]-|\.wfx-[0-9]|wfx-scan-[0-9]	high	wfx	Payload markers in runner files, artifacts and step summaries.
+content	Dependency Audit [a-z0-9]{4}	medium	wfx	Payload workflow name.
+content	Restore cache [a-z0-9]{4}	medium	wfx	Step name injected into existing workflows.
+content	gdmp-pivo[t]|LAFA=[=]==	high	Gheist	Payload strings printed to the Actions log.
+content	193\.32\.204\.199	high	GhostAction	Collection server.
+content	api\.telegram\.org/bot	medium	exfiltration	Sending data to a Telegram bot from a workflow or script.
+action	tj-actions/changed-files@	medium	CVE-2025-30066	Tags were repointed to a secret-dumping commit in March 2025. Pin to a reviewed commit SHA or replace.
+action	reviewdog/action-[a-z-]+@	medium	CVE-2025-30154	reviewdog/action-setup@v1 was compromised in March 2025. Pin to a reviewed commit SHA.
+action	aquasecurity/trivy-action@	medium	Trivy 2026	Action tags were force-pushed in March 2026. Pin to a commit SHA from Aqua's advisory.
+git_fixed	2.50.2	high	Git 2026-11	Six CVEs fixed 10 Nov 2026, including code execution on clone (CVE-2026-111760).
+git_fixed	2.51.3	high	Git 2026-11	Backport.
+git_fixed	2.52.1	high	Git 2026-11	Backport.
+git_fixed	2.53.1	high	Git 2026-11	Backport.
+git_fixed	2.54.1	high	Git 2026-11	Backport.
+git_fixed	2.55.1	high	Git 2026-11	Backport.
+git_fixed	2.56.1	high	Git 2026-11	Main fix release.

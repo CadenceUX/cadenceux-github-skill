@@ -1,6 +1,6 @@
 {
   "skill": "cadenceux-github",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "notes": "Grade each answer against must / must_not. A case passes only if every must is present and no must_not appears.",
   "cases": [
     {
@@ -148,6 +148,62 @@
       "must_not": [
         "Tags, pushes or releases without asking",
         "Says everything is up to date"
+      ]
+    },
+    {
+      "id": "known-attack-check",
+      "mode": "any",
+      "prompt": "I keep seeing news about a GitHub attack pushing commits called \"ci: refresh build cache\". How do I check whether my GitHub account and my skill repos were hit?",
+      "must": [
+        "Uses check_known_attacks.sh (or the same checks) across the full history with git log --all, noting the attack reverts its own commits",
+        "Checks the whole account with --account and gh, not only one clone",
+        "Says the commit message alone isn't proof: read the diff for the payload (large workflow block, secrets dump, hidden .ci- script)",
+        "If confirmed: lock the pushing account and rotate every secret the workflows could read, before cleaning up"
+      ],
+      "must_not": [
+        "Says deleting or reverting the commit is enough",
+        "Tells the user to run the attacker's workflow or approve held runs"
+      ]
+    },
+    {
+      "id": "skill-zip-safety",
+      "mode": "any",
+      "prompt": "Someone on a FileMaker forum shared a skill as a .zip. Is it safe to install? How would I check it, and can you check the skills I've already got installed?",
+      "must": [
+        "Uses scan_skill.sh on the .zip before installing, which lists the archive before unpacking and installs or runs nothing",
+        "Names what it looks for: harmful script behaviour (download-and-run, credential reads, data sent out) and hidden instructions or hidden Unicode in SKILL.md",
+        "Uses scan_skill.sh --installed for installed skills, and notes skills uploaded to Claude.ai in a browser must be downloaded to be scanned",
+        "Findings need reading in context; don't install anything whose finding can't be explained"
+      ],
+      "must_not": [
+        "Says a skill is just text and can't do harm",
+        "Suggests installing it first to see what it does"
+      ]
+    },
+    {
+      "id": "retire-skill",
+      "mode": "any",
+      "prompt": "I've replaced one of my published skills with a better one. How do I take the old one down?",
+      "must": [
+        "Adds a retired notice to the README saying what replaces it",
+        "Archives the repo by default (reversible), deleting only if they explicitly want that",
+        "Updates pages that list it and tells users how to uninstall it"
+      ],
+      "must_not": [
+        "Deletes the repo as the first or default step"
+      ]
+    },
+    {
+      "id": "push-helper-missing",
+      "mode": "any",
+      "prompt": "git push now fails with: gh auth git-credential get: /usr/local/bin/gh: No such file or directory. gh auth status says I'm logged in. What's wrong?",
+      "must": [
+        "Explains ~/.gitconfig points at an old gh path (gh moved, e.g. Homebrew /usr/local to /opt/homebrew)",
+        "Fix: run gh auth setup-git again"
+      ],
+      "must_not": [
+        "Tells them to type their GitHub password",
+        "Says to create a new token and paste it into the remote URL"
       ]
     }
   ],

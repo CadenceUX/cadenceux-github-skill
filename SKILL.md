@@ -1,17 +1,17 @@
 ---
 name: cadenceux-github
 description: >-
-  Guides a FileMaker developer through sharing a Claude skill on GitHub, from creating a GitHub
-  account to keeping published skills current: signing in without a password, scrubbing client
-  material (hostnames, credentials, .fmp12 files, SaXML and DDR exports) before the first
-  commit, shaping the repo as its own Claude Code plugin marketplace, building release .zip and
-  .skill archives from a tag, shipping updates, reviewing published skills for unreleased
-  changes, and recovering from a committed password. Use when someone wants to put a skill on
-  GitHub, set up a GitHub account to share skills, make a skill installable with claude plugin
-  install, cut a skill release, check whether their published skills need updating, or fix a
-  skill download that won't upload to Claude. Not for writing, testing or auditing a skill's
-  content (cadenceux-skill-creator), CadenceUX's own marketplace releases, hook plugins
-  (cadenceux-plugin-creator), or Git version control of a FileMaker solution.
+  Guides a FileMaker developer through sharing a Claude skill on GitHub and keeping it safe:
+  signing in without a password, scrubbing client material before the first commit, shaping the
+  repo as its own plugin marketplace, building release .zip and .skill archives, shipping
+  updates, reviewing and retiring published skills, and recovering from a committed password.
+  Checks GitHub accounts, repos and Git for known attacks (wfx, Gheist, unpatched Git), and
+  scans downloaded or installed skills for harmful scripts and hidden instructions. Use when
+  someone wants to put a skill on GitHub, cut or check a release, retire a skill, asks whether
+  their GitHub account or repos were compromised, or whether a skill .zip or an installed skill
+  is safe. Not for writing or auditing a skill's content (cadenceux-skill-creator), CadenceUX's
+  own marketplace releases, hook plugins (cadenceux-plugin-creator), or Git for a FileMaker
+  solution.
 license: CC-BY-4.0
 compatibility: >-
   Claude Code (runs git, gh and the bundled scripts) and Claude.ai, Claude Desktop and Cowork
@@ -19,7 +19,7 @@ compatibility: >-
   Git; the GitHub CLI is recommended.
 metadata:
   author: Darrin Southern, CadenceUX
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # CadenceUX GitHub
@@ -28,7 +28,20 @@ Publishing FileMaker work on GitHub. Currently it covers sharing a Claude skill:
 working skill folder to a public repo that other FileMaker developers can install three ways,
 as a Claude Code plugin, by double-clicking a `.skill` file (macOS), or by uploading a `.zip` in
 Claude. The general Git workflow is assumed knowledge; this skill covers what is specific to
-skills and to FileMaker work.
+skills and to FileMaker work, plus two safety checks every publisher needs: whether their
+GitHub account or repos have been hit by a known attack, and whether a skill is safe to install.
+
+## Requirements
+
+| Kind | Name | Used for | Surfaces |
+|---|---|---|---|
+| CLI | `git`, `bash`, `curl` | Every route; `curl` downloads the scripts in chat | Claude Code; in chat the developer runs them |
+| CLI | `gh` (signed in) | Creating repos and releases, `--account` checks | Claude Code |
+| CLI | `claude` | Validating and test-installing the plugin | Claude Code |
+| CLI | `unzip` or `python3`, `perl` | Reading archives and finding hidden Unicode in `scan_skill.sh` | Claude Code |
+| API | `api.github.com` (through `gh`) | Releases, issues, account-wide attack checks | Claude Code |
+| Path | `~/.claude/plugins`, `~/.claude/skills`, the Claude app's data folder | `scan_skill.sh --installed` | Claude Code |
+| Path | `~/.gitconfig` | Git's sign-in helper, written by `gh auth setup-git` and checked by `check_known_attacks.sh` | Claude Code |
 
 ## Start here
 
@@ -36,8 +49,9 @@ Work out where the developer is before giving any steps.
 
 - **Claude Code:** look first, changing nothing. In the folder they named (or the current one):
   is there a `SKILL.md`, and what's its `name`? Then `git status --short`, `git remote -v`,
-  `git tag --sort=-v:refname | head -3` and `gh auth status`. Report what you found in two or
-  three lines, the route it points to, and the next step, then ask before starting it. Tick
+  `git tag --sort=-v:refname | head -3`, `gh auth status`, and, if there's a remote,
+  `git ls-remote origin HEAD` (sign-in can look fine to `gh` while git itself can't push; see
+  [Common problems](#common-problems)). Report what you found in two or three lines, the route it points to, and the next step, then ask before starting it. Tick
   the checklist steps the check shows are already done. If `gh` isn't signed in, ask whether
   they have a GitHub account before anything else.
 - **Chat:** if the request already says what they want, go straight to that route. If it
@@ -54,6 +68,9 @@ Work out where the developer is before giving any steps.
 | Tags pushed, changes since the last tag | [Shipping an update](#shipping-an-update) |
 | "Are my skills up to date?" | [Reviewing published skills](#reviewing-published-skills) |
 | A credential found in any commit | [Fixing a committed secret](#fixing-a-committed-secret), before anything else |
+| "Was my account or repo hacked?", a strange commit or branch | [Security checks](#security-checks): known attacks |
+| "Is this skill safe?", a downloaded .zip or .skill, installed skills | [Security checks](#security-checks): scan the skill |
+| A skill to withdraw | [Retiring a published skill](#retiring-a-published-skill) |
 | An error message or failed install | [Common problems](#common-problems) |
 
 ## How to work
@@ -61,6 +78,9 @@ Work out where the developer is before giving any steps.
 - **Claude Code:** run the commands yourself. Ask before each outward-facing step, one at a
   time: creating the GitHub repo, the first push, switching to public, publishing a release.
   An earlier yes doesn't cover the next one.
+- **Never overwrite files in the developer's own clone.** Update it with `git pull`. If
+  `git status` shows changes, stop and ask what they are before touching anything: an
+  uncommitted edit exists nowhere else, and copying a file over it destroys it.
 - **Chat (no shell):** the developer runs the commands. Once the route is known (never before
   the [Start here](#start-here) question is answered), open with that route's path in brief,
   one line per step, and include these facts in it whatever the question: SKILL.md sits at the
@@ -78,6 +98,9 @@ Work out where the developer is before giving any steps.
 curl -fsSLO https://github.com/CadenceUX/cadenceux-github-skill/raw/main/scripts/scan_for_client_material.sh
 curl -fsSLO https://github.com/CadenceUX/cadenceux-github-skill/raw/main/scripts/build_release.sh
 curl -fsSLO https://github.com/CadenceUX/cadenceux-github-skill/raw/main/scripts/review_published_skill.sh
+curl -fsSLO https://github.com/CadenceUX/cadenceux-github-skill/raw/main/scripts/check_known_attacks.sh
+curl -fsSLO https://github.com/CadenceUX/cadenceux-github-skill/raw/main/scripts/scan_skill.sh
+curl -fsSLO https://github.com/CadenceUX/cadenceux-github-skill/raw/main/references/known-attacks.tsv
 ```
 
 - Windows: every command here runs in **Git Bash** (installed with Git for Windows), not
@@ -135,7 +158,9 @@ gh auth status
   terminal afterwards.
 - No GitHub account: [No GitHub account yet](#no-github-account-yet) first.
 - Not signed in: `gh auth login`, choose GitHub.com, HTTPS, and **Login with a web browser**.
-  Then `gh auth setup-git` so plain `git push` uses the same sign-in.
+  Then `gh auth setup-git` so plain `git push` uses the same sign-in. It writes `gh`'s full
+  path into `~/.gitconfig`, so run it again after moving or reinstalling `gh` (for example when
+  Homebrew moves from `/usr/local` to `/opt/homebrew`).
 - Never type a GitHub password at a terminal prompt; GitHub rejects it anyway. A password
   prompt means sign-in isn't set up: run the two commands above.
 - Set the commit identity once. The GitHub noreply address keeps a personal email out of public
@@ -175,7 +200,12 @@ bash scan_for_client_material.sh /path/to/skill "Acme" "acme.local" "jsmith"
 
 It searches every file Git would commit (and, once there's history, every past commit with
 `--history`) and exits non-zero when it finds anything. Read every hit; it's a helper, not a
-guarantee. Then add a `.gitignore` (template in [references/repo-files.md](references/repo-files.md))
+guarantee. It skips reserved placeholders (`127.0.0.1`, the `192.0.2.x` documentation range,
+`example.com` and `.test` addresses) and four-part version numbers. After reviewing a line that
+is fine, add `sensitive-ok` in a comment on it, or list the exact value in `sensitive-allow.txt`
+at the skill root (one per line, `#` comments; the same file `cadenceux-skill-creator`'s
+validator reads). Use that for public sample data, such as a vendor's example values in a
+reference catalog, never for a real credential. Then add a `.gitignore` (template in [references/repo-files.md](references/repo-files.md))
 **before** `git add`, and check what Git would pick up:
 
 ```bash
@@ -353,6 +383,38 @@ check reports those in a session. Whether the content has gone stale (a vendor r
 change to the Claude app's upload rules, evals that no longer pass) is an audit: hand that to
 `cadenceux-skill-creator`.
 
+## Retiring a published skill
+
+1. Add a **Retired** notice at the top of the README: why, and what replaces it. Commit, push.
+2. **Archive** the repo by default: `gh repo archive owner/my-skill --yes`. It stays readable
+   and installable for anyone who still needs it, and unarchiving undoes it.
+3. Delete only when the developer asks for deletion in so many words. It can't be undone, it
+   breaks every install command and link, and `gh` needs the extra scope first:
+   `gh auth refresh -s delete_repo`, then `gh repo delete owner/my-skill --yes`.
+4. Update every page that mentions the skill (a marketplace that lists it, READMEs, a website),
+   saying archived or deleted, whichever is true. Tell users how to remove it:
+   `claude plugin uninstall my-skill@<marketplace-name>`, or remove it in Customize → Skills.
+
+## Security checks
+
+Two read-only scripts; details, how to read the findings and what to do about them are in
+[references/security-checks.md](references/security-checks.md). Read that file before running
+either, and before advising on any finding.
+
+- **Known attacks** on the developer's GitHub account, repos and Git:
+  `bash check_known_attacks.sh --account <username> <clone> ...`. Recent campaigns use stolen
+  tokens to push secret-stealing workflow changes under the victim's name, then revert them
+  within seconds, so the script reads every commit in history. It also flags Git versions
+  missing security fixes.
+- **A skill before you trust it**, downloaded or installed:
+  `bash scan_skill.sh <file.zip|folder>` or `bash scan_skill.sh --installed`. It reads the
+  archive before unpacking it, then checks scripts for harmful behaviour and instructions for
+  hidden text and injected commands.
+
+Both report HIGH, MEDIUM and LOW findings for a person to read; neither changes anything. A
+confirmed attack finding means: lock the account and rotate secrets first (the reference has
+the order).
+
 ## Fixing a committed secret
 
 Deleting a password in a later commit leaves it in history, readable by anyone who clones.
@@ -376,6 +438,7 @@ Deleting a password in a later commit leaves it in history, readable by anyone w
 | `Password for 'https://…':` prompt | Sign-in not set up. `gh auth login`, then `gh auth setup-git`. |
 | Push rejected, "fetch first" | The GitHub repo was created with a README or licence. `git pull --rebase origin main`, then push. |
 | Push goes to the wrong account | `gh auth status`; `gh auth switch` to the right one. |
+| `gh auth git-credential get: …/gh: No such file or directory`, or `could not read Username … Device not configured` | `~/.gitconfig` points at a `gh` that has moved. Run `gh auth setup-git` again; `check_known_attacks.sh` reports this too. |
 | Claude upload says invalid or opens the plugin installer | A GitHub source zip, or an archive with `.claude-plugin/`. Use the release asset from `build_release.sh`. |
 | `Plugin not found` on install | Wrong name after `@`: use the marketplace `name`, not the repo name. |
 | Users don't get the update | `plugin.json` version not bumped, or they haven't run `marketplace update`. |
@@ -401,8 +464,9 @@ If the fetch fails, skip silently.
   GitHub account. The hand-offs: skill-creator builds and tests, then hands a developer's own
   skill here to publish; an update starts there (content and evals) and ships here; a review
   starts here and hands content freshness there.
-  Both describe release archives and the `.claude-plugin/` exclusion; when the Claude app's
-  upload rules change, update both.
+  Both build release archives with this skill's `build_release.sh` (from the tag, honouring
+  `.gitattributes` export-ignore); when the Claude app's upload rules change, update both.
+  Both skip the same reserved placeholders and read the same `sensitive-allow.txt`.
 - **cadenceux-plugin-creator** — hooks and multi-component plugins. This skill only covers the
   thin plugin wrapper around a single skill.
 

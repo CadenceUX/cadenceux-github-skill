@@ -15,14 +15,24 @@ It covers what a general Git guide doesn't:
   private commit email.
 - **Keeping published skills current**: a review script reports unreleased commits, version
   mismatches, missing release archives, open issues and out-of-date installed copies.
-- **Updates and mistakes**: version bumps in all four places, never moving a tag, and what to
-  do when a password made it into history.
+- **Updates and mistakes**: version bumps in all four places, never moving a tag, what to do
+  when a password made it into history, and retiring a skill (archive first, delete only on
+  purpose).
+- **Known attacks on GitHub**: a script checks your Git versions, local clones (every commit,
+  including ones an attacker reverted) and, with `gh`, every repo your account owns for the
+  indicators of campaigns such as wfx and Gheist, which push secret-stealing workflow changes
+  with stolen tokens. Indicators live in a data file so new campaigns are a quick update.
+- **Is this skill safe?**: a second script checks a downloaded `.zip` or `.skill`, a skill
+  folder, or every skill and plugin installed on your computer, for harmful scripts, hidden
+  Unicode, injected instructions and pre-approved shell access, without installing or running
+  anything.
 
 In Claude Code it runs the `git` and `gh` commands, asking before each step that changes
 something on GitHub. In chat, it gives the commands one at a time.
 
 Try: *"I don't have a GitHub account yet"*, *"Help me put my FileMaker skill on GitHub"*, *"Are my published skills up to date?"*, *"Make my skill installable with claude
-plugin install"*, *"Ship version 1.1.0 of my skill"*.
+plugin install"*, *"Ship version 1.1.0 of my skill"*, *"Was my GitHub account hit by wfx?"*,
+*"Is this skill zip safe to install?"*, *"Scan my installed skills"*.
 
 ## Install
 
@@ -45,7 +55,9 @@ has the wrong folder layout and won't install as a skill.
 ## Requirements
 
 Git (Git for Windows on Windows; commands run in Git Bash). The GitHub CLI (`gh`) is
-recommended. Claude Code is needed for `claude plugin validate` and the install check.
+recommended, and needed for account-wide attack checks. Claude Code is needed for
+`claude plugin validate` and the install check. The skill scanner uses `unzip` or `python3`
+and `perl`, which macOS, Linux and Git Bash include.
 
 ## Licence
 
