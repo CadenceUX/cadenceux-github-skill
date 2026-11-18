@@ -225,7 +225,7 @@
     },
     {
       "id": "webviewer-app-push",
-      "prompt": "Push my ADT web viewer app to a new GitHub repo.",
+      "prompt": "Push my ADK web viewer app to a new GitHub repo.",
       "expect": "not triggered"
     },
     {

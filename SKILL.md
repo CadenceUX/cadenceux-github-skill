@@ -19,7 +19,7 @@ compatibility: >-
   Git; the GitHub CLI is recommended.
 metadata:
   author: Darrin Southern, CadenceUX
-  version: "1.1.0"
+  version: "1.1.1"
 ---
 
 # CadenceUX GitHub
@@ -446,7 +446,7 @@ Deleting a password in a later commit leaves it in history, readable by anyone w
 
 ## Self-version check
 
-On the first request of a session, once: if `fmp-dev-orchestrator` is installed,
+On the first request of a session, once: if `cadenceux-dx` is installed,
 leave this to its stack check. Otherwise fetch
 `https://github.com/CadenceUX/cadenceux-github-skill/raw/main/VERSION`; if it's
 newer than `metadata.version` above, open the first response with:

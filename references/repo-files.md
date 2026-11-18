@@ -138,7 +138,7 @@ Zip and .skill users: download the latest release and install it again.
 ```
 
 Above the install section, the README says what the skill does, when it triggers (two or three
-example prompts), what it needs (FileMaker version, ADT, plug-ins), and its licence and author.
+example prompts), what it needs (FileMaker version, ADK, plug-ins), and its licence and author.
 
 ## CHANGELOG.md
 

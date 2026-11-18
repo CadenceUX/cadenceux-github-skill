@@ -1,7 +1,7 @@
 {
   "name": "cadenceux-github",
   "displayName": "CadenceUX GitHub",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Walks a FileMaker developer through publishing a Claude skill on GitHub and keeping it safe: sign-in, scrubbing client material, release archives, updates and retiring, checks for known GitHub attacks such as wfx, and scans of downloaded or installed skills.",
   "author": { "name": "Darrin Southern", "url": "https://cadenceux.com.au" },
   "homepage": "https://github.com/CadenceUX/cadenceux-github-skill",
